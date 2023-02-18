@@ -3,6 +3,9 @@ defmodule Sentinel.EventEmitter do
   GenServer that emits events from a server log file with the help of Sentinel.LogParser
   """
 
+  @enforce_keys [:stream]
+  defstruct stream: nil, last_message_type: nil
+
   use GenServer
 
   require Logger
@@ -48,27 +51,39 @@ defmodule Sentinel.EventEmitter do
     end)
 
     send(self(), :check_log)
-    {:ok, stream}
+    {:ok, %__MODULE__{stream: stream, last_message_type: nil}}
   end
 
   @impl true
-  def handle_info(:check_log, stream) do
-    for line <- stream do
-      case LogParser.parse_log_line_event(line) do
-        {:ok, message} ->
-          Logger.info(message)
+  def handle_info(:check_log, %__MODULE__{} = state) do
+    last_message_type =
+      for line <- state.stream, reduce: state.last_message_type do
+        message_type ->
+          case LogParser.parse_log_line_event(line) do
+            {:ok, event_type, message} ->
+              Logger.info(message)
 
-          "LOG_CHANNEL_ID"
-          |> System.get_env(@default_channel_id)
-          |> String.to_integer()
-          |> Api.create_message(message)
+              "LOG_CHANNEL_ID"
+              |> System.get_env(@default_channel_id)
+              |> String.to_integer()
+              |> send_new(message, event_type, state.last_message_type)
 
-        _ ->
-          nil
+            _ ->
+              message_type
+          end
       end
-    end
 
     Process.send_after(self(), :check_log, @check_log_interval_ms)
-    {:noreply, stream}
+    {:noreply, %__MODULE__{state | last_message_type: last_message_type}}
+  end
+
+  # Only send this message if it isn't a consecutive World Saved message.
+  defp send_new(channel_id, message, event_type, last_message_type) do
+    if event_type == :world_saved and event_type == last_message_type do
+      last_message_type
+    else
+      Api.create_message(channel_id, message)
+      event_type
+    end
   end
 end

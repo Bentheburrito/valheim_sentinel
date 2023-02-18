@@ -36,12 +36,13 @@ defmodule Sentinel.LogParser do
     end
   end
 
-  @spec parse_log_line_event(String.t()) :: {:ok, event :: any()} | :invalid
+  @spec parse_log_line_event(String.t()) ::
+          {:ok, event_name :: atom(), event :: any()} | :invalid
   def parse_log_line_event(line) do
     with {:ok, timestamp} <- parse_log_line_timestamp(line),
          {event_name, captures} <- match_event_regex(line),
          {:ok, message} <- build_event_message(event_name, captures, timestamp) do
-      {:ok, message}
+      {:ok, event_name, message}
     else
       _ -> :invalid
     end
