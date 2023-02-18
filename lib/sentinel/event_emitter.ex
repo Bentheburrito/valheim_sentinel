@@ -33,22 +33,8 @@ defmodule Sentinel.EventEmitter do
   def init(log_path) do
     {:ok, stream} = LogParser.new_log_stream(log_path)
 
-    start_utc = DateTime.utc_now()
-
     # Skip old logs
-    Enum.reduce_while(stream, nil, fn line, _acc ->
-      case LogParser.parse_log_line_timestamp(line) do
-        {:ok, dt} ->
-          if DateTime.compare(dt, start_utc) == :lt do
-            {:cont, nil}
-          else
-            {:halt, nil}
-          end
-
-        _ ->
-          {:cont, nil}
-      end
-    end)
+    for _line <- stream, do: nil
 
     send(self(), :check_log)
     {:ok, %__MODULE__{stream: stream, last_message_type: nil}}
