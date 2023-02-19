@@ -24,7 +24,8 @@ defmodule Sentinel.MixProject do
     [
       {:nostrum, github: "Kraigie/nostrum"},
       {:dotenv_parser, "~> 1.2"},
-      {:phoenix_pubsub, "~> 2.0"}
+      {:phoenix_pubsub, "~> 2.0"},
+      {:timex, "~> 3.0"}
     ]
   end
 end

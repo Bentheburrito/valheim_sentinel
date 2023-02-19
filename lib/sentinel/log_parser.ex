@@ -81,14 +81,12 @@ defmodule Sentinel.LogParser do
 
   @spec parse_log_line_timestamp(String.t()) :: {:ok, dt :: DateTime.t()} | :invalid
   def parse_log_line_timestamp(line) do
-    with [date, time] <- line |> String.slice(0..18) |> String.split(" "),
-         [month, day, year] <- String.split(date, "/"),
-         {:ok, offset} <- Sentinel.get_local_utc_offset(),
-         {:ok, dt, offset} <- DateTime.from_iso8601("#{year}-#{month}-#{day}T#{time}#{offset}") do
-      {:ok, %DateTime{dt | utc_offset: offset}}
+    with %Timex.TimezoneInfo{} = local_tzi <- Timex.Timezone.local(),
+         dt_string <- String.slice(line, 0..18) <> local_tzi.full_name,
+         {:ok, dt} <- Timex.parse(dt_string, "{0M}/{0D}/{YYYY} {0h24}:{0m}:{0s}{Zname}") do
+      {:ok, dt}
     else
-      _ ->
-        :invalid
+      _ -> :invalid
     end
   end
 end
