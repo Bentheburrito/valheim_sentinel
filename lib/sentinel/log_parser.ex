@@ -5,11 +5,13 @@ defmodule Sentinel.LogParser do
 
   require Logger
 
+  alias Sentinel.LogParser.Entry
+
   def log_event_regexes do
     [
       player_died: ~r/Got character ZDOID from (?P<viking>\w+[ \w+]*) : 0:0/,
-      player_joined: ~r/Got character ZDOID from (?P<viking>\w+[ \w+]*) : [-0-9]*:1$/,
-      game_server_connected: ~r/Game server connected/,
+      player_joined: ~r/Got character ZDOID from (?P<viking>\w+[ \w+]*) : [-0-9]*:\d$/,
+      game_server_connected: ~r/Game server connected$/,
       game_server_shutdown: ~r/OnApplicationQuit/,
       world_saved: ~r/World saved \( (\d+\.\d+ms) \)/,
       random_event: ~r/.*? Random event set:(\w+)/,
@@ -37,18 +39,18 @@ defmodule Sentinel.LogParser do
   end
 
   @spec parse_log_line_event(String.t()) ::
-          {:ok, event_name :: atom(), event :: any()} | :invalid
+          {:ok, Entry.t()} | :invalid
   def parse_log_line_event(line) do
     with {:ok, timestamp} <- parse_log_line_timestamp(line),
          {event_name, captures} <- match_event_regex(line),
          {:ok, message} <- build_event_message(event_name, captures, timestamp) do
-      {:ok, event_name, message}
+      {:ok, Entry.new(event_name, timestamp, captures, line, message)}
     else
       _ -> :invalid
     end
   end
 
-  defp build_event_message(event_name, captures, timestamp) do
+  def build_event_message(event_name, captures, timestamp) do
     case event_text(event_name, captures) do
       :none -> :none
       text -> {:ok, "#{server_signature(timestamp)} #{text}"}
