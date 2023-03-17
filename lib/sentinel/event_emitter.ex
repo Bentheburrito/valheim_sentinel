@@ -24,6 +24,10 @@ defmodule Sentinel.EventEmitter do
     GenServer.start_link(__MODULE__, log_path, name: __MODULE__)
   end
 
+  def put_associations(assoc_map) do
+    GenServer.cast(__MODULE__, {:put_associations, assoc_map})
+  end
+
   ## IMPL
 
   @impl true
@@ -40,6 +44,11 @@ defmodule Sentinel.EventEmitter do
 
     send(self(), :check_log)
     {:ok, %__MODULE__{stream: stream, last_message_type: nil}}
+  end
+
+  @impl true
+  def handle_cast({:put_associations, assoc_map}, %__MODULE__{} = state) do
+    {:noreply, %__MODULE__{state | associations: assoc_map}}
   end
 
   @impl true

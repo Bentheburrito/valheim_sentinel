@@ -58,14 +58,29 @@ defmodule Sentinel.LogParser do
   end
 
   defp event_text(:player_died, [_, viking]), do: "🪦 #{viking} has been slain"
-  defp event_text(:player_joined, [_, viking]), do: "#{viking} joined the server"
-  defp event_text(:game_server_connected, [_]), do: "Server online"
-  defp event_text(:game_server_shutdown, [_]), do: "Server offline"
+  defp event_text(:player_joined, [_, viking]), do: "👋 #{viking} joined the server"
+  defp event_text(:game_server_connected, [_]), do: "🟢 Server online"
+  defp event_text(:game_server_shutdown, [_]), do: "🔴 Server offline"
   defp event_text(:world_saved, [_, time]), do: "☑️ World saved in #{time}"
-  defp event_text(:random_event, [_, type]), do: "⚔️ A #{type} event has started!"
-  defp event_text(:steam_user_joined, [_, steamid]), do: "User connecting: #{steamid}"
-  defp event_text(:steam_user_disconnect, [_, steamid]), do: "User disconnected: #{steamid}"
+  defp event_text(:random_event, [_, type]), do: random_event_text(type)
+  defp event_text(:steam_user_joined, [_, steamid]), do: "🔄 User connecting: #{steamid}"
+  defp event_text(:steam_user_disconnect, [_, steamid]), do: "👋 User disconnected: #{steamid}"
   defp event_text(_, _), do: :none
+
+  defp random_event_text("army_eikthyr"), do: "🐗 Eikthyr rallies the creatures of the forest"
+  defp random_event_text("army_theelder"), do: "🪓 The forest is moving..."
+  defp random_event_text("army_bonemass"), do: "💀 A foul smell from the swamp (undead)"
+  defp random_event_text("army_moder"), do: "❄️ A cold wind blows from the mountains"
+  defp random_event_text("army_goblin"), do: "😈 The horde is attacking"
+  defp random_event_text("foresttrolls"), do: "🪨 The ground is shaking"
+  defp random_event_text("blobs"), do: "☣️ A foul smell from the swamp (blobs)"
+  defp random_event_text("skeletons"), do: "💀 Skeleton Surprise"
+  defp random_event_text("surtlings"), do: "🔥 There's a smell of sulfur in the air"
+  defp random_event_text("wolves"), do: "🐺 You are being hunted"
+  defp random_event_text("bats"), do: "🦇 You stirred the cauldron"
+  defp random_event_text("army_gjall"), do: "🔥 What's up, Gjall!?"
+  defp random_event_text("army_seekers"), do: "🪳 They sought you out"
+  defp random_event_text(type), do: "⚔️ A #{type} event has started!"
 
   defp server_signature(timestamp) do
     server_name = System.get_env("LOG_MESSAGE_AUTHOR", "Server")
